@@ -1,4 +1,5 @@
 #!/bin/bash
+AVG_FLAG=false
 PRINT_FLAG="false"
 PROGRESSBAR_FLAG=false
 D_MODE=""
@@ -15,7 +16,7 @@ show_help()
 -f	./filename	Executable file name.	
 -r	repeat		Repeat execution.
 -p			Print result one by one for repeated work.
--a			Calculate average time. #not implemented
+-a			Calculate average time.
 -b			Print progress bar. #not implemented
 -H			Help
 		
@@ -24,7 +25,7 @@ For Example: ./run.h -f ./lu -r 1000 3000 10
 exit ${E_ARG}
 }
 
-while getopts "dpHr:f:" OPT
+while getopts "adpHr:f:" OPT
 do
 	case $OPT in
 		d)
@@ -41,6 +42,9 @@ do
 			;;
 		b)
 			PROGRESSBAR_FLAG=true
+			;;
+		a)
+			AVG_FLAG=true
 			;;
 		\?)
 			echo "Invalid option: -$OPTARG. Use -H flag for help."
@@ -83,13 +87,17 @@ while [ ${re:-1} -ge 1 ]; do
 	if ${PRINT_FLAG}; then
 		echo ${a1}
 	fi
-	time_init=${a1:0:7}
-	time_lude=${a1:8:7}
-	time_chck=${a1:16:7}
 
-	SUM_TIME_INIT=`echo $SUM_TIME_INIT + $time_init | bc`
-	SUM_TIME_LUDE="$( bc <<<"$SUM_TIME_LUDE + $time_lude" )"
-	SUM_TIME_CHCK="$( bc <<<"$SUM_TIME_CHCK + $time_chck" )"
+	if ${AVG_FLAG}
+	then
+		time_init=${a1:0:7}
+		time_lude=${a1:8:7}
+		time_chck=${a1:16:7}
+
+		SUM_TIME_INIT=`echo $SUM_TIME_INIT + $time_init | bc`
+		SUM_TIME_LUDE="$( bc <<<"$SUM_TIME_LUDE + $time_lude" )"
+		SUM_TIME_CHCK="$( bc <<<"$SUM_TIME_CHCK + $time_chck" )"
+	fi
 
 	len=${#a1}
 	correct=${a1:$len-1:$len-0}
@@ -108,7 +116,10 @@ else
 	echo "[WRONG]: ${WRONG_CNT}times"
 fi
 
-AVG_TIME_INIT="$( bc <<<"scale=5;$SUM_TIME_INIT/$RE_CNT" )"
-AVG_TIME_LUDE="$( bc <<<"scale=5;$SUM_TIME_LUDE/$RE_CNT" )"
-AVG_TIME_CHCK="$( bc <<<"scale=5;$SUM_TIME_CHCK/$RE_CNT" )"
-printf "INIT: %.5f  LUDE: %.5f  CHCK: %.5f\n" "${AVG_TIME_INIT}" "${AVG_TIME_LUDE}" "${AVG_TIME_CHCK}"
+if ${AVG_FLAG}
+then
+	AVG_TIME_INIT="$( bc <<<"scale=5;$SUM_TIME_INIT/$RE_CNT" )"
+	AVG_TIME_LUDE="$( bc <<<"scale=5;$SUM_TIME_LUDE/$RE_CNT" )"
+	AVG_TIME_CHCK="$( bc <<<"scale=5;$SUM_TIME_CHCK/$RE_CNT" )"
+	printf "INIT: %.5f  LUDE: %.5f  CHCK: %.5f\n" "${AVG_TIME_INIT}" "${AVG_TIME_LUDE}" "${AVG_TIME_CHCK}"
+fi
